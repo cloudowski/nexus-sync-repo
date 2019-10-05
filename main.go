@@ -21,6 +21,7 @@ var (
 	port       = flag.String("port", "8081", "Nexus server port")
 	username   = flag.String("username", "admin", "Nexus user")
 	password   = flag.String("password", "admin123", "Nexus password")
+	failonerr  = flag.Bool("failonerr", false, "Fail on upload error")
 	repository = flag.String("repository", "releases",
 		"repository to sync against")
 	upload = flag.Bool("upload", false,
@@ -144,10 +145,14 @@ func main() {
 			defer res.Body.Close()
 
 			if res.StatusCode != http.StatusCreated {
-				log.Fatalf("Expected %d but got %d (%s)\n",
-					http.StatusCreated,
-					res.StatusCode,
-					url)
+				if *failonerr {
+					log.Fatalf("Expected %d but got %d (%s)\n",
+						http.StatusCreated,
+						res.StatusCode,
+						url)
+				} else {
+					log.Printf("WARNING - got HTTP %d for %s", res.StatusCode, url)
+				}
 			}
 			a.NexusStatusCode = res.StatusCode
 		}
